@@ -1,5 +1,5 @@
 require "csvh/version"
+require "csvh/reader"
 
 module CSVH
-  # Your code goes here...
 end
