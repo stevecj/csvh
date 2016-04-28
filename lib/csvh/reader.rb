@@ -15,7 +15,18 @@ module CSVH
     end
 
     def initialize(csv)
+      unless csv.return_headers?
+        raise \
+          InappropreateCsvInstanceError,
+           "%{self.class} requires a CSV instance that returns headers." \
+          " It needs to have been initialized with non-false/nil values" \
+          " for :headers and :return_headers options"
+      end
       @csv = csv
+    end
+
+    def to_csvh
+      self
     end
 
     def headers
@@ -25,6 +36,7 @@ module CSVH
     def_delegators \
       :@csv,
       :close
+
 
     def each
       headers
