@@ -1,5 +1,5 @@
 require "csvh/version"
 
-module Csvh
+module CSVH
   # Your code goes here...
 end
