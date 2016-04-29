@@ -3,9 +3,6 @@
 The csvh gem provides convenient augmentations to handling of CSV
 files with header rows in Ruby.
 
-This gem is still in early development, and does not _actually_
-do anything yet. That should change very soon.
-
 ## Installation
 
 Add this line to your application's Gemfile:
