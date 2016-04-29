@@ -20,7 +20,7 @@ module CSVH
           InappropreateCsvInstanceError,
            "%{self.class} requires a CSV instance that returns headers." \
           " It needs to have been initialized with non-false/nil values" \
-          " for :headers and :return_headers options"
+          " for :headers and :return_headers options."
       end
       @csv = csv
     end
@@ -30,13 +30,20 @@ module CSVH
     end
 
     def headers
-      @headers ||= @csv.readline.headers
+      @headers ||= begin
+        row = @csv.readline
+        unless row.header_row?
+          raise \
+            CsvPrematurelyShiftedError,
+            "the header row was prematurely read from the underlying CSV object."
+        end
+        row.headers
+      end
     end
 
     def_delegators \
       :@csv,
       :close
-
 
     def each
       headers

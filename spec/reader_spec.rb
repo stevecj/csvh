@@ -28,6 +28,33 @@ describe CSVH::Reader do
     end
   end
 
+  describe '#headers' do
+    subject { described_class.new(csv) }
+    let(:csv){ CSV.new(
+      "a,b,c\na1,b1,c1\na2,b2,c2\n",
+      headers: :first_row,
+      return_headers: true
+    ) }
+
+    context "with a pristine underlying CSV instance" do
+      it "returns an array of the headers from the first row" do
+        expect( subject.headers ).to eq( %w(a b c) )
+      end
+    end
+
+    context "with an underlying CSV instance that was prematurely shifted" do
+      before do
+        csv.shift
+      end
+
+      it "fails with an appropriate exception" do
+        expect{
+          subject.headers
+        }.to raise_exception( CSVH::CsvPrematurelyShiftedError )
+      end
+    end
+  end
+
   describe '::from_file' do
     subject{
       described_class.from_file(example_csv_path)
