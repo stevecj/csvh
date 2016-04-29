@@ -1,11 +1,18 @@
 require 'spec_helper'
 
 describe CSVH::Reader do
+  let(:csv_source_data) {
+    <<-EOS
+A,B,C
+a1,b1,c1
+a2,b2,c2
+    EOS
+  }
 
   describe '::new' do
     it "accepts a CSV that treats the first line as headers and returns the headers row" do
       csv = CSV.new(
-        "a,b,c\n1,2,3\n",
+        csv_source_data,
         headers: :first_row,
         return_headers: true
       )
@@ -14,44 +21,67 @@ describe CSVH::Reader do
     end
 
     it "rejects a CSV that treats the first line as data" do
-      csv = CSV.new("a,b,c\n1,2,3\n")
+      csv = CSV.new(csv_source_data)
       expect{
         described_class.new(csv)
       }.to raise_exception( CSVH::InappropreateCsvInstanceError )
     end
 
     it "rejects a CSV that treats the first line as headers, but does not return the header row" do
-      csv = CSV.new("a,b,c\n1,2,3\n", headers: :first_row)
+      csv = CSV.new(csv_source_data, headers: :first_row)
       expect{
         described_class.new(csv)
       }.to raise_exception( CSVH::InappropreateCsvInstanceError )
     end
   end
 
-  describe '#headers' do
+  describe "an instance" do
     subject { described_class.new(csv) }
+
     let(:csv){ CSV.new(
-      "a,b,c\na1,b1,c1\na2,b2,c2\n",
+      csv_source_data,
       headers: :first_row,
       return_headers: true
     ) }
 
-    context "with a pristine underlying CSV instance" do
-      it "returns an array of the headers from the first row" do
-        expect( subject.headers ).to eq( %w(a b c) )
+    describe '#headers' do
+      context "with a pristine underlying CSV instance" do
+        it "returns an array of the headers from the first row" do
+          expect( subject.headers ).to eq( %w(A B C) )
+        end
+      end
+
+      context "with an underlying CSV instance that was prematurely shifted" do
+        before do
+          csv.shift
+        end
+
+        it "fails with an appropriate exception" do
+          expect{
+            subject.headers
+          }.to raise_exception( CSVH::CsvPrematurelyShiftedError )
+        end
       end
     end
 
-    context "with an underlying CSV instance that was prematurely shifted" do
-      before do
-        csv.shift
+    describe "#each" do
+      it "calls the given block for each data row when given a block argument" do
+        got_data_rows = []
+        subject.each do |row|
+          got_data_rows << row
+        end
+        expect( got_data_rows ).to eq( [
+          CSV::Row.new( %w(A B C), %w(a1 b1 c1) ),
+          CSV::Row.new( %w(A B C), %w(a2 b2 c2) )
+        ] )
       end
+    end
 
-      it "fails with an appropriate exception" do
-        expect{
-          subject.headers
-        }.to raise_exception( CSVH::CsvPrematurelyShiftedError )
-      end
+    it "returns an enumerator that returns all of the data rows" do
+      actual = subject.each
+      expect( actual.next ).to eq( CSV::Row.new( %w(A B C), %w(a1 b1 c1) ) )
+      expect( actual.next ).to eq( CSV::Row.new( %w(A B C), %w(a2 b2 c2) ) )
+      expect{ actual.next }.to raise_exception( StopIteration )
     end
   end
 
