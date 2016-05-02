@@ -1,6 +1,7 @@
 require 'delegate'
 
 module CSVH
+
   class Reader
     extend Forwardable
 
@@ -66,5 +67,7 @@ module CSVH
         @csv.each
       end
     end
+
   end
+
 end
