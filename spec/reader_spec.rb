@@ -151,4 +151,49 @@ a2,b2,c2
     end
   end
 
+  describe '::from_string_or_io' do
+    subject{
+      described_class.from_string_or_io(example_data)
+    }
+
+    let(:example_data_string) {
+      <<-EOS
+Make,Model
+Ford,Prefect
+Chevrolet,Superurban
+      EOS
+    }
+
+    after do
+      subject.close
+    end
+
+    context "given CSV data in a string" do
+      let(:example_data) { example_data_string }
+
+      it "returns a reader for the given CSV string data" do
+        it_returns_reader_for_given_csv_data
+      end
+    end
+
+    context "given CSV data through an input stream" do
+      let(:example_data) {
+        StringIO.new(example_data_string)
+      }
+
+      it "returns a reader for the given CSV stream data" do
+        it_returns_reader_for_given_csv_data
+      end
+    end
+
+    def it_returns_reader_for_given_csv_data
+        expect( subject.headers ).to eq( ['Make', 'Model'] )
+
+        expect( subject.each.entries ).to eq( [
+          CSV::Row.new( ['Make', 'Model'], %w(Ford Prefect)    ),
+          CSV::Row.new( ['Make', 'Model'], %w(Chevrolet Superurban) )
+        ] )
+    end
+  end
+
 end

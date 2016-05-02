@@ -17,7 +17,14 @@ module CSVH
         new(csv)
       end
 
+      def from_string_or_io(data, **opts)
+        opts = DEFAULT_CSV_OPTS.merge(opts)
+        csv = CSV.new(data, **opts)
+        new(csv)
+      end
+
       alias foreach from_file
+      alias parse from_string_or_io
     end
 
     def initialize(csv)
