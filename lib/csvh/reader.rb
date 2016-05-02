@@ -4,14 +4,20 @@ module CSVH
   class Reader
     extend Forwardable
 
-    def self.from_file(file_path)
-      io = File.open(file_path, 'r')
-      csv = CSV.new(
-        io,
-        headers: :first_row,
-        return_headers: true
-      )
-      new(csv)
+    DEFAULT_CSV_OPTS = {
+      headers: :first_row,
+      return_headers: true
+    }.freeze
+
+    class << self
+      def from_file(file_path, **opts)
+        opts = DEFAULT_CSV_OPTS.merge(opts)
+        io = File.open(file_path, 'r')
+        csv = CSV.new(io, **opts)
+        new(csv)
+      end
+
+      alias foreach from_file
     end
 
     def initialize(csv)
