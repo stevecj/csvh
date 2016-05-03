@@ -152,7 +152,8 @@ module CSVH
     end
 
     # These methods always delegate to CSV, which may or may not
-    # futher delegate them to its underlying file IO object.
+    # futher delegate them to its underlying file IO object,
+    # depending on how it was created.
 
     def_delegators \
       :@csv,
@@ -183,13 +184,27 @@ module CSVH
       :to_io,
       :tty?
 
-
-    # When given a block, yields each data row of the data source
-    # in turn as `CSV::Row` instances. When called without a
-    # block, returns an Enumerator over those rows.
+    # You can use this method to install a `CSV::Converters`
+    # built-in, or provide a block that handles a custom
+    # conversion.
     #
-    # Does not yield the header row, however, the headers are
-    # available via the #headers method of the reader or the row.
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :convert
+
+    # Returns the current list of converters in effect.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :converters
+
+    # When given a block, yields each remaining data row of the
+    # data source in turn as a `CSV::Row` instance. When called
+    # without a block, returns an Enumerator over those rows.
+    #
+    # Will never yield the header row, however, the headers are
+    # available via the #headers method of either the reader or
+    # the row object.
     #
     # @yieldparam [CSV::Row]
     def each
@@ -200,6 +215,76 @@ module CSVH
         @csv.each
       end
     end
+
+    # Returns `true` if all output fields are quoted.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :force_quotes?
+
+    # Identical to #convert, but for header rows.
+    #
+    # Note that this must be called before reading any rows or
+    # calling #headers to have any effect.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :header_convert
+
+    # Returns the current list of converters in effect for
+    # headers.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :header_converters
+
+    # Slurps the remaining data rows and returns a `CSV::Table`.
+    #
+    # This is essentially the same behavior as `CSV#read`, but
+    # ensures that the header info has been fetched first, and the
+    # resulting table will never include the header row.
+    #
+    # Note that the Ruby documentation (at least as of 2.2.2) is
+    # for `CSV#read` is incomplete and simply says that it
+    # returns "an Array of Arrays", but it actually returns a
+    # table if a truthy `:headers` option was used when creating
+    # the `CSV` object.
+    #
+    # @return [CSV::Table] a table of remaining unread rows
+    def read
+      headers
+      @csv.read
+    end
+
+    alias  readlines read
+
+    # A single data row is pulled from the data source, parsed
+    # and returned as a CSV::Row.
+    #
+    # This is essentially the same behavior as `CSV#shift`, but
+    # ensures that the header info has been fetched first, and
+    # #shift will never return the header row.
+    #
+    # @return [CSV::Row] the next previously unread row
+    def shift
+      headers
+      @csv.shift
+    end
+
+    alias  gets      shift
+    alias  readline  shift
+
+    # Returns `true` if blank lines are skipped by the parser.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :skip_blanks?
+
+    # Returns `true` if `unconverted_fields()` to parsed results.
+    #
+    # See the documentation for `CSV` in the Ruby standard
+    # library for more details.
+    def_delegator :@csv, :unconverted_fields?
 
   end
 

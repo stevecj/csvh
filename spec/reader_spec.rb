@@ -78,6 +78,40 @@ a2,b2,c2
       end
     end
 
+    describe "#shift" do
+      context "before accessing #headers or reading any data rows" do
+        it "reads the first data row" do
+          expect( subject.shift ).to eq(
+            CSV::Row.new( %w(A B C), %w(a1 b1 c1) ),
+          )
+        end
+      end
+
+      context "after accessing #headers, before reading any data rows" do
+        before do
+          subject.headers
+        end
+
+        it "reads the first data row" do
+          expect( subject.shift ).to eq(
+            CSV::Row.new( %w(A B C), %w(a1 b1 c1) ),
+          )
+        end
+      end
+
+      context "after previously reading the first data row using #shift" do
+        before do
+          subject.shift
+        end
+
+        it "reads the second data row" do
+          expect( subject.shift ).to eq(
+            CSV::Row.new( %w(A B C), %w(a2 b2 c2) )
+          )
+        end
+      end
+    end
+
     describe "#each" do
       context "with a typical underlying CSV instance" do
         it "calls the given block for each data row when given a block argument" do
@@ -91,11 +125,18 @@ a2,b2,c2
           ] )
         end
 
-        it "returns an enumerator that returns all of the data rows" do
+        it "returns an enumerator that returns all of the data rows when given no block argument" do
           actual = subject.each
           expect( actual.next ).to eq( CSV::Row.new( %w(A B C), %w(a1 b1 c1) ) )
           expect( actual.next ).to eq( CSV::Row.new( %w(A B C), %w(a2 b2 c2) ) )
           expect{ actual.next }.to raise_exception( StopIteration )
+        end
+
+        it "enumerates previously unread rows when a row has been previously read" do
+          subject.shift
+          expect( subject.each.entries ).to eq( [
+            CSV::Row.new( %w(A B C), %w(a2 b2 c2) )
+          ] )
         end
       end
 
@@ -118,6 +159,7 @@ a2,b2,c2
         end
 
         it "returns an enumerator that returns all of the rows (including the 1st)" do
+          # The first row is a data row when headers are hard-coded.
           actual = subject.each
           expect( actual.next ).to eq( CSV::Row.new( %w(-A- -B- -C-), %w(A B C) ) )
           expect( actual.next ).to eq( CSV::Row.new( %w(-A- -B- -C-), %w(a1 b1 c1) ) )
@@ -126,6 +168,29 @@ a2,b2,c2
         end
       end
     end
+
+    describe '#read' do
+      it "returns a table containing the parsed csv data when no rows previously read" do
+        actual_table = subject.read
+
+        expect( actual_table ).to respond_to(:to_csv)
+        expect( actual_table.each.entries ).to eq( [
+          CSV::Row.new( %w(A B C), %w(a1 b1 c1) ),
+          CSV::Row.new( %w(A B C), %w(a2 b2 c2) )
+        ] )
+      end
+
+      it "returns a table of remaining rows data when a row was previously read" do
+        subject.shift
+        actual_table = subject.read
+
+        expect( actual_table ).to respond_to(:to_csv)
+        expect( actual_table.each.entries ).to eq( [
+          CSV::Row.new( %w(A B C), %w(a2 b2 c2) )
+        ] )
+      end
+    end
+
   end
 
   describe '::from_file' do
@@ -158,6 +223,15 @@ a2,b2,c2
       end
 
       expect( block_called ).to eq( true )
+    end
+
+    def expect_reader_for_file_data(reader)
+      expect( reader.headers ).to eq( ['Fruit', 'Color'] )
+
+      expect( reader.each.entries ).to eq( [
+        CSV::Row.new( ['Fruit', 'Color'], %w(Cherry Red)    ),
+        CSV::Row.new( ['Fruit', 'Color'], %w(Orange Orange) )
+      ] )
     end
 
     it "closes the reader that was passed to the given normally-executing block before returning" do
@@ -227,14 +301,6 @@ a2,b2,c2
       expect( actual ).to eq( :expected )
     end
 
-    def expect_reader_for_file_data(reader)
-      expect( reader.headers ).to eq( ['Fruit', 'Color'] )
-
-      expect( reader.each.entries ).to eq( [
-        CSV::Row.new( ['Fruit', 'Color'], %w(Cherry Red)    ),
-        CSV::Row.new( ['Fruit', 'Color'], %w(Orange Orange) )
-      ] )
-    end
   end
 
   describe '::from_string_or_io' do
