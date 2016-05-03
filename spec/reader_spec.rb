@@ -129,22 +129,108 @@ a2,b2,c2
   end
 
   describe '::from_file' do
-    subject{
-      described_class.from_file(example_csv_path)
-    }
-
     let(:example_csv_path) {
       File.join(TEST_DATA_DIR, 'example.csv')
     }
 
-    after do
-      subject.close
+    it "returns a reader for the given CSV file when not given a block argument" do
+      begin
+        reader = described_class.from_file(example_csv_path)
+        expect_reader_for_file_data reader
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
     end
 
-    it "returns a reader for the given CSV file" do
-      expect( subject.headers ).to eq( ['Fruit', 'Color'] )
+    it "passes an open reader for the file to the given block" do
+      block_called = false
+      reader = nil
 
-      expect( subject.each.entries ).to eq( [
+      begin
+        described_class.from_file(example_csv_path) do |r|
+          block_called = true
+          reader = r
+          expect_reader_for_file_data r
+        end
+
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
+
+      expect( block_called ).to eq( true )
+    end
+
+    it "closes the reader that was passed to the given normally-executing block before returning" do
+      begin
+        reader = nil
+
+        described_class.from_file(example_csv_path) do |r|
+          reader = r
+        end
+
+        expect( reader ).to be_closed
+
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
+    end
+
+    it "closes the reader that was passed to the given exception-raising block before returning" do
+      begin
+        reader = nil
+
+        begin
+          described_class.from_file(example_csv_path) do |r|
+            reader = r
+            raise StandardError
+          end
+        rescue
+        end
+
+        expect( reader ).to be_closed
+
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
+    end
+
+    it "propagates an exception raised in the given block" do
+      begin
+        reader = nil
+
+        expect{
+          described_class.from_file(example_csv_path) do |r|
+            reader = r
+            raise StandardError, 'Wibble'
+          end
+        }.to raise_exception( StandardError, 'Wibble' )
+
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
+    end
+
+    it "returns the value that is returned by the given block" do
+      reader = nil
+
+      begin
+
+        actual = described_class.from_file(example_csv_path) do |r|
+          reader = r
+          :expected
+        end
+
+      ensure
+        reader.close if reader && (! reader.closed?)
+      end
+
+      expect( actual ).to eq( :expected )
+    end
+
+    def expect_reader_for_file_data(reader)
+      expect( reader.headers ).to eq( ['Fruit', 'Color'] )
+
+      expect( reader.each.entries ).to eq( [
         CSV::Row.new( ['Fruit', 'Color'], %w(Cherry Red)    ),
         CSV::Row.new( ['Fruit', 'Color'], %w(Orange Orange) )
       ] )
