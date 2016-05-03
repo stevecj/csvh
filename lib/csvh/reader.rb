@@ -30,6 +30,38 @@ module CSVH
       # return the header row. Any oadditional options you supply
       # will be added to those defaults or override them.
       #
+      # A [Reader] created using this method will delegate all
+      # of the same IO methods that a `CSV` created using
+      # `CSV#open` does except `close_write`, `flush`, `fsync`,
+      # `sync`, `sync=`, and `truncate`. You may call:
+      #
+      # * binmode()
+      # * binmode?()
+      # * close()
+      # * close_read()
+      # * closed?()
+      # * eof()
+      # * eof?()
+      # * external_encoding()
+      # * fcntl()
+      # * fileno()
+      # * flock()
+      # * flush()
+      # * internal_encoding()
+      # * ioctl()
+      # * isatty()
+      # * path()
+      # * pid()
+      # * pos()
+      # * pos=()
+      # * reopen()
+      # * seek()
+      # * fstat()
+      # * tell()
+      # * to_i()
+      # * to_io()
+      # * tty?()
+      #
       # @param file_path [String] the path of the file to read.
       # @param opts options for `CSV.new`.
       # @yieldparam [Reader] the new reader.
@@ -119,10 +151,38 @@ module CSVH
       end
     end
 
+    # These methods always delegate to CSV, which may or may not
+    # futher delegate them to its underlying file IO object.
+
     def_delegators \
       :@csv,
+      :binmode,
+      :binmode?,
+      :close_read,
       :close,
-      :closed?
+      :closed?,
+      :eof,
+      :eof?,
+      :external_encoding,
+      :fcntl,
+      :fileno,
+      :flock,
+      :flush,
+      :internal_encoding,
+      :ioctl,
+      :isatty,
+      :path,
+      :pid,
+      :pos,
+      :pos=,
+      :reopen,
+      :seek,
+      :fstat,
+      :tell,
+      :to_i,
+      :to_io,
+      :tty?
+
 
     # When given a block, yields each data row of the data source
     # in turn as `CSV::Row` instances. When called without a
