@@ -17,7 +17,7 @@ a2,b2,c2
         return_headers: true
       )
       actual = described_class.new(csv)
-      expect( actual ).to respond_to(:to_csvh)
+      expect( actual ).to respond_to(:to_csvh_reader)
     end
 
     it "rejects a CSV that treats the first line as data" do

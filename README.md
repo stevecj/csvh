@@ -21,7 +21,35 @@ Or install it yourself as:
 
 ## Usage
 
-Usage instructions coming soonish.
+This gem provides a `CSVH::Reader` class that lazily reads from
+CSV-formatted data that has a header row. Allows accessing
+headers before reading any subsequent data rows and/or when no
+additional data rows are present in the data.
+
+The `CSVH::Reader` class is primarily intended to be used in one
+of the following ways:
+
+    # Read from a file, and close the file automatically.
+    CSVH::Reader.from_file 'the-path-to/my-data.csv' do |reader|
+      # reader.headers is an array of header strings.
+      puts "Headers: " + reader.headers.inspect
+
+      reader.each do |row|
+        # row is a standard Ruby CSV::Row object.
+        puts row.to_h.inspect
+      end
+    end
+
+    # Read from an IO stream.
+    reader = CSVH::Reader.from_string_or_io(an_io_stream)
+
+    # reader.headers is an array of header strings.
+    puts "Headers: " + reader.headers.inspect
+
+    reader.each do |row|
+      # row is a standard Ruby CSV::Row object.
+      puts row.to_h.inspect
+    end
 
 ## Development
 
