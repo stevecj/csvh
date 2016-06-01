@@ -68,7 +68,7 @@ tags, and push the `.gem` file to
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
-https://github.com/[USERNAME]/csvh.
+https://github.com/stevecj/csvh.
 
 
 ## License
