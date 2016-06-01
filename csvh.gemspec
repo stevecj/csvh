@@ -9,7 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Steve Jorgensen"]
   spec.email         = ["stevej@stevej.name"]
 
-  spec.summary       = "Convenient augmentations to handling of CSV files with header rows in Ruby"
+  spec.summary       = "A straightforward API to lazily read headers and data rows from CSV, " \
+                       "including in cases where no data rows are present."
   spec.homepage      = "https://github.com/stevecj/csvh"
   spec.license       = "MIT"
 

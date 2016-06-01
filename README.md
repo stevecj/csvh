@@ -1,7 +1,7 @@
 # CSVH
 
-The csvh gem provides convenient augmentations to handling of CSV
-files with header rows in Ruby.
+A straightforward API to lazily read headers and data rows from
+CSV, including in cases where no data rows are present.
 
 ## Installation
 
